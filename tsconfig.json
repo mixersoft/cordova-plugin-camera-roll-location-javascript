@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "lib": [
+      "dom",
+      "es2015",
+      "es2015.promise"
+    ],
+    "outFile": "./build/CameraRollLocation.js",
+    "module": "amd",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "target": "es5"
+  },
+  "typeRoots": [
+    ".node_modules/@types"
+  ],
+  "types": [
+    "lodash",
+    "googlemaps"
+  ],
+  "exclude": [
+    "node_modules",
+    "dev-raw-camera-roll.ts"
+  ],
+  "compileOnSave": false,
+  "atom": {
+    "rewriteTsconfig": false
+  }
+}

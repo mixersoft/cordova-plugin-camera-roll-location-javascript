@@ -1,0 +1,15 @@
+{
+  "name": "cordova-camera-roll-location-js",
+  "author": "Snaphappi",
+  "homepage": "http://ionicframework.com/",
+  "private": true,
+  "scripts": {
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/google-maps": "3.1.28",
+    "@types/googlemaps": "3.20.34",
+    "typescript": "^2.0.3"
+  },
+  "description": "cordova javascript for plugin"
+}
