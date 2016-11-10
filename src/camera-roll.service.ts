@@ -2,7 +2,7 @@ import {
   LatLng, LatLngBounds,
   LatLngLiteral, LatLngBoundsLiteral,
   mediaType, mediaSubtype,
-  optionsFilter, optionsSort,
+  optionsQuery, optionsFilter, optionsSort,
   cameraRollPhoto
 } from './camera-roll.types';
 
@@ -21,11 +21,30 @@ exec = require('cordova/exec');
 declare var window;
 const PLUGIN_KEY = "cordova.plugins.CameraRollLocation";
 
+function _localTimeAsDate(localTime:string): Date {
+  try {
+    let dt = new Date(localTime);
+    if (isNaN(dt as any as number) == false)
+      return dt;
+
+    // BUG: Safari does not parse time strings to Date correctly  
+    const [,d,h,m,s] = localTime.match( /(.*)\s(\d*):(\d*):(\d*)\./)
+    dt = new Date(d);
+    dt.setHours(parseInt(h), parseInt(m), parseInt(s));
+    // console.log(`localTimeAsDate=${dt.toISOString()}`)
+    return dt;
+  } catch (err) {
+    throw new Error(`Invalid localTime string, value=${localTime}`);
+  }
+}
+
 export class CameraRollWithLoc {
 
   protected _photos : cameraRollPhoto[] = [];
   protected _filter : optionsFilter = {};
   protected _filteredPhotos : cameraRollPhoto[];
+
+  private _isProcessing: Promise<cameraRollPhoto[]>;
 
   static sortPhotos(
     photos : cameraRollPhoto[]
@@ -128,15 +147,21 @@ export class CameraRollWithLoc {
    * get cameraRollPhoto[] from CameraRoll using Plugin,
    * uses cached values by default, ignore with force==true
    * filter later in JS
-   * @param  {any}                  interface optionsFilter
+   * @param  {optionsQuery}                  interface optionsQuery
    * @param  {boolean = false}      refresh
    * @return {Promise<cameraRollPhoto[]>}         [description]
    */
-  queryPhotos(options?: any = {}, force:boolean = false) : Promise<cameraRollPhoto[]>{
-    if (this._photos.length && !options && force==false) {
-      console.info("CameraRoll.queryPhotos() using cached values")
+  queryPhotos(options?: optionsQuery, force:boolean = false) : Promise<cameraRollPhoto[]>{
+    if (!this._isProcessing && this._photos.length && !options && force==false) {
+      // resolve immediately with cached value
       return Promise.resolve(this._photos);
     }
+    
+    if (this._isProcessing && !options && force==false){
+      // wait for promise to resolve
+      return this._isProcessing;
+    }
+
     let context:string;
     let plugin:any;
     if (typeof exec == "function") context = 'cordova';
@@ -144,19 +169,19 @@ export class CameraRollWithLoc {
       plugin = window && window.cordova && window.cordova.plugins && window.cordova.plugins.CameraRollLocation;
       if (plugin) context = 'plugin';
     }
-    let pr : Promise<cameraRollPhoto[]>;
     switch (context){
       case 'cordova':
-        // pr = plugin['getByMoments'](options)
-
         // const args0 = _pick(options, ["from", "to", "mediaType", "mediaSubType"]);
         const args0 : any = {};
         ["from", "to", "mediaType", "mediaSubType"].forEach( k=>{
           if (options.hasOwnProperty(k) && options[k] != undefined ) args0[k] = options[k];
         });
+        // map startDate=>from, endDate=>to as a convenience
+        if (options && !options.from && options['startDate']) options.from = options['startDate']
+        if (options && !options.to && options['endDate']) options.to = options['endDate']
 
         const methodName = "getByMoments";
-        pr = new Promise<string>(
+        this._isProcessing = new Promise<string>(
           (resolve,reject)=>{
             // cordova.exec()
             exec(
@@ -177,11 +202,11 @@ export class CameraRollWithLoc {
         })
         break;
       case 'plugin':
-        pr = plugin.getMoments(options);
+        this._isProcessing = plugin.getMoments(options);
         break;
       default:  // browser environment
         if (!cameraRollAsJsonString) {
-          pr = Promise.reject("ERROR: cordova plugin error, cordova not available??!?");
+          this._isProcessing = Promise.reject("ERROR: cordova plugin error, cordova not available??!?");
         } else {
           if (!this._photos.length) {
             console.warn("cordova.plugins.CameraRollLocation not available, using sample data");
@@ -192,16 +217,17 @@ export class CameraRollWithLoc {
               console.error( "Error parsing JSON" );
             }
           }
-          pr = Promise.resolve(this._photos)
+          this._isProcessing = Promise.resolve(this._photos)
         }
         break;
     }
-    return pr.then( (photos)=>{
+    return this._isProcessing.then( (photos)=>{
       photos.forEach( (o:any)=> {
         if (o.location && o.location instanceof GeoJsonPoint == false ) {
           o.location = new GeoJsonPoint(o.location);
         }
       });
+      this._isProcessing = null;
       return this._photos = photos;
     })
   }
@@ -234,8 +260,8 @@ export class CameraRollWithLoc {
     // let fromAsLocalTime = new Date(from.valueOf() - from.getTimezoneOffset()*60000).toJSON()
     result = result.filter( (o : any) => {
       // filter on localTime
-      if (from && new Date(o['localTime']) < from) return false;
-      if (to && new Date(o['localTime']) > to) return false;
+      if (from && _localTimeAsDate(o['localTime']) < from) return false;
+      if (to && _localTimeAsDate(o['localTime']) > to) return false;
       if (locationName
         && false === o['momentLocationName'].startsWith(locationName)
         ) return false;
@@ -263,7 +289,7 @@ export class CameraRollWithLoc {
       // everything good
       return true;
     });
-    this._filteredPhotos = result
+    this._filteredPhotos = result || [];
     return Promise.resolve(this._filteredPhotos);
   }
 

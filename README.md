@@ -34,9 +34,32 @@ tsc
   www/
     CameraRollLocation.js
   ```
+1. Remove "internal" `define()`
+  ```
+  // define("location-helper", ["require", "exports"], function (require, exports) {
+  //   "use strict";
+      [keep the actual js code]
+  // })
+  ```
+1. Add locally imported vars as appropriate
+  ```
+  var location_helper_1 = exports;
+  // ...
+  var camera_roll_service_1 = exports;
+  // ...
+
+  ```
+
+## Add plugin to ionic/cordova project
+  ```
+  ionic plugin add --save cordova-plugin-add-swift-support
+  ionic plugin add --save "https://github.com/mixersoft/cordova-plugin-camera-roll-location.git"
+  inoic build ios
+  ```
 
 
-## Cordova Installation to xcode project
+
+## Manual Cordova Installation to xcode project
 
 1. Copy/Paste `./build/cameraRollPhoto.js` to this location:
 

@@ -7,6 +7,14 @@ export interface optionsPlugin {
   mediaSubtype?: mediaSubtype
 }
 
+export interface optionsQuery {
+  from?: Date;
+  to?: Date;
+  mediaType?: mediaType;
+  mediaSubtype?: mediaSubtype;
+  [propName: string]: any;    // map startDate=>from, endDate=>to as convenience
+}
+
 export interface optionsFilter {
   startDate?: Date,
   endDate?: Date,
