@@ -1,4 +1,4 @@
-import { cameraRollPhoto, NodeCallback, optionsGetByMoments } from './camera-roll.types';
+import { cameraRollPhoto, NodeCallback, optionsGetCameraRoll, optionsGetByMoments } from './camera-roll.types';
 import { CameraRollWithLoc } from './camera-roll.service';
 
 /**
@@ -11,12 +11,12 @@ var plugin = new CameraRollWithLoc();
  * calls (ios/swift) CameraRollLocation.getByMoments() using plugin exec
  * swift: func getByMoments(from from: NSDate? = nil, to: NSDate? = nil) -> [PhotoWithLoc]
  *
- * @param  {getByMomentsOptions}   options {from:, to: mediaType: mediaSubtypes: }
+ * @param  {optionsGetCameraRoll}   options {from:, to: mediaType: mediaSubtypes: }
  * @param  callback()              OPTIONAL nodejs style callback, i.e. (err, resp)=>{}
  * @return Promise() or void       returns a Promise if callback is NOT provided
  */
-export function getByMoments(
-  options : optionsGetByMoments
+export function getCameraRoll(
+  options : optionsGetCameraRoll
   , callback: NodeCallback
 ) : Promise<cameraRollPhoto[]>
 {
@@ -33,3 +33,14 @@ export function getByMoments(
   }
   return promise;
 }
+
+
+// deprecate
+export function getByMoments(
+  options : optionsGetCameraRoll
+  , callback: NodeCallback
+) : Promise<cameraRollPhoto[]>
+{
+  return getCameraRoll(options, callback);
+}
+

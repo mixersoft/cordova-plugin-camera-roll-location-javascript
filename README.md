@@ -7,7 +7,7 @@ This is a Typescript project for building the Javascript side of the
 
 ```Typescript
 const plugin : any = cordova.plugins.CameraRollLocation;
-let pr: Promise<cameraRollPhoto[]> = plugin.getByMoments(options, false)
+let pr: Promise<cameraRollPhoto[]> = plugin.getCameraRoll(options, false)
 .then( (photos)=>{
   this._photos = photos;
 })
@@ -53,7 +53,8 @@ tsc
 ## Add plugin to ionic/cordova project
   ```
   ionic plugin add --save cordova-plugin-add-swift-support
-  ionic plugin add --save "https://github.com/mixersoft/cordova-plugin-camera-roll-location.git"
+  # ionic plugin add --save "https://github.com/mixersoft/cordova-plugin-camera-roll-location.git"
+  ionic plugin add --save cordova-plugin-camera-roll-location
   inoic build ios
   ```
 

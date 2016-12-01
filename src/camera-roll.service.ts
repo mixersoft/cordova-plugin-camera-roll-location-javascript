@@ -1,12 +1,13 @@
 import {
-  LatLng, LatLngBounds,
-  LatLngLiteral, LatLngBoundsLiteral,
+
   mediaType, mediaSubtype,
   optionsQuery, optionsFilter, optionsSort,
   cameraRollPhoto
 } from './camera-roll.types';
 
 import {
+  LatLng, LatLngLiteral, LatLngSpeedLiteral,
+  LatLngBounds, LatLngBoundsLiteral,
   GeoJson, GeoJsonPoint,
   GpsRegion, CircularGpsRegion,
   distanceBetweenLatLng
@@ -19,6 +20,7 @@ declare var require;
 declare var cameraRollAsJsonString;
 exec = require('cordova/exec');
 declare var window;
+declare var Promise;
 const PLUGIN_KEY = "cordova.plugins.CameraRollLocation";
 
 function _localTimeAsDate(localTime:string): Date {
@@ -180,7 +182,7 @@ export class CameraRollWithLoc {
         if (options && !options.from && options['startDate']) options.from = options['startDate']
         if (options && !options.to && options['endDate']) options.to = options['endDate']
 
-        const methodName = "getByMoments";
+        const methodName = "getCameraRoll";
         this._isProcessing = new Promise<string>(
           (resolve,reject)=>{
             // cordova.exec()
@@ -202,7 +204,7 @@ export class CameraRollWithLoc {
         })
         break;
       case 'plugin':
-        this._isProcessing = plugin.getMoments(options);
+        this._isProcessing = plugin.getCameraRoll(options);
         break;
       default:  // browser environment
         if (!cameraRollAsJsonString) {
@@ -223,6 +225,10 @@ export class CameraRollWithLoc {
     }
     return this._isProcessing.then( (photos)=>{
       photos.forEach( (o:any)=> {
+        if (o.localTime && typeof o.localTime == "string"){ 
+          o.localTime = _localTimeAsDate(o.localTime);
+        }
+        // deprecate
         if (o.location && o.location instanceof GeoJsonPoint == false ) {
           o.location = new GeoJsonPoint(o.location);
         }
@@ -332,6 +338,10 @@ export class CameraRollWithLoc {
 
     result = result.slice(0, limit);
     result.forEach( (o)=> {
+      if (o.localTime && typeof o.localTime == "string"){ 
+        o.localTime = _localTimeAsDate(o.localTime);
+      }
+      // deprecate
       if (o.location instanceof GeoJsonPoint == false ) {
         o.location = new GeoJsonPoint(o.location);
       }

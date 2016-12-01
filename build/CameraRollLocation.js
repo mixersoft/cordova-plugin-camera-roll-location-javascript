@@ -407,7 +407,7 @@ define("camera-roll.service", ["require", "exports", "location-helper"], functio
                         options.from = options['startDate'];
                     if (options && !options.to && options['endDate'])
                         options.to = options['endDate'];
-                    var methodName_1 = "getByMoments";
+                    var methodName_1 = "getCameraRoll";
                     this._isProcessing = new Promise(function (resolve, reject) {
                         // cordova.exec()
                         exec(resolve, reject, "cameraRollLocation", methodName_1, [args0_1]);
@@ -425,7 +425,7 @@ define("camera-roll.service", ["require", "exports", "location-helper"], functio
                     });
                     break;
                 case 'plugin':
-                    this._isProcessing = plugin.getMoments(options);
+                    this._isProcessing = plugin.getCameraRoll(options);
                     break;
                 default:
                     if (!cameraRollAsJsonString) {
@@ -448,6 +448,10 @@ define("camera-roll.service", ["require", "exports", "location-helper"], functio
             }
             return this._isProcessing.then(function (photos) {
                 photos.forEach(function (o) {
+                    if (o.localTime && typeof o.localTime == "string") {
+                        o.localTime = _localTimeAsDate(o.localTime);
+                    }
+                    // deprecate
                     if (o.location && o.location instanceof location_helper_1.GeoJsonPoint == false) {
                         o.location = new location_helper_1.GeoJsonPoint(o.location);
                     }
@@ -544,6 +548,10 @@ define("camera-roll.service", ["require", "exports", "location-helper"], functio
             }
             result = result.slice(0, limit);
             result.forEach(function (o) {
+                if (o.localTime && typeof o.localTime == "string") {
+                    o.localTime = _localTimeAsDate(o.localTime);
+                }
+                // deprecate
                 if (o.location instanceof location_helper_1.GeoJsonPoint == false) {
                     o.location = new location_helper_1.GeoJsonPoint(o.location);
                 }
@@ -566,11 +574,11 @@ define("cordova-plugin", ["require", "exports", "camera-roll.service"], function
      * calls (ios/swift) CameraRollLocation.getByMoments() using plugin exec
      * swift: func getByMoments(from from: NSDate? = nil, to: NSDate? = nil) -> [PhotoWithLoc]
      *
-     * @param  {getByMomentsOptions}   options {from:, to: mediaType: mediaSubtypes: }
+     * @param  {optionsGetCameraRoll}   options {from:, to: mediaType: mediaSubtypes: }
      * @param  callback()              OPTIONAL nodejs style callback, i.e. (err, resp)=>{}
      * @return Promise() or void       returns a Promise if callback is NOT provided
      */
-    function getByMoments(options, callback) {
+    function getCameraRoll(options, callback) {
         var promise = plugin.queryPhotos(options);
         if (typeof callback == "function") {
             promise.then(function (result) {
@@ -582,6 +590,11 @@ define("cordova-plugin", ["require", "exports", "camera-roll.service"], function
             });
         }
         return promise;
+    }
+    exports.getCameraRoll = getCameraRoll;
+    // deprecate
+    function getByMoments(options, callback) {
+        return getCameraRoll(options, callback);
     }
     exports.getByMoments = getByMoments;
 });
